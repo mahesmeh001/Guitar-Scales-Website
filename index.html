@@ -13,6 +13,8 @@
     <style>
       :root {
         --pal-bg: #fff1d3;
+        /* Fretboard + themed selects: lighter cream than page */
+        --pal-fretboard: #fff9ed;
         --pal-mid: #ffb090;
         --pal-key: #ca5995;
         --pal-root: #5d1c6a;
@@ -47,28 +49,72 @@
         background: rgba(255, 241, 211, 0.55);
         border-bottom: 1px solid rgba(93, 28, 106, 0.1);
       }
-      .card-themed .form-select,
       .card-themed .form-control {
         border-color: rgba(93, 28, 106, 0.2);
+      }
+      /* All page selects (root/scale live outside .card-themed) */
+      main .form-select {
+        border-color: rgba(93, 28, 106, 0.2);
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
+      }
+      main .form-select:focus {
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
+        border-color: rgba(93, 28, 106, 0.35);
+        box-shadow: 0 0 0 0.2rem rgba(93, 28, 106, 0.12);
+      }
+      main .form-select option {
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
       }
       .alert-themed {
         background: rgba(255, 176, 144, 0.35);
         border-color: rgba(202, 89, 149, 0.45);
         color: var(--pal-ink);
       }
+      /* Scroll/center on wrapper so the grid isn’t offset by nested overflow + auto margins */
+      #fretboardMount {
+        display: flex;
+        justify-content: center;
+        overflow-x: auto;
+        background: var(--pal-fretboard);
+      }
       .fb-grid {
         display: grid;
-        background: rgba(255, 241, 211, 0.35);
+        width: fit-content;
+        max-width: none;
+        flex: 0 0 auto;
+        background: var(--pal-fretboard);
         border: 1px solid rgba(255, 176, 144, 0.55);
         border-radius: 0.35rem;
-        overflow-x: auto;
         user-select: none;
+      }
+      /* Informational: full card width so minmax(..., 1fr) matches original stretch behavior */
+      .fb-grid.fb-informational {
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .fb-grid.fb-informational .fb-cell {
+        min-width: 1.55rem;
+      }
+      .fb-grid.fb-informational .fb-mark {
+        padding: 0.14rem 0.28rem;
+        min-width: 1.2rem;
+      }
+      .fb-grid.fb-informational .fb-fret-num {
+        padding: 0.4rem 0.15rem;
+      }
+      .fb-grid.fb-informational .fb-string-label {
+        padding: 0 0.28rem;
       }
       .fb-fret-num {
         text-align: center;
         font-size: 0.68rem;
         color: var(--pal-muted);
-        padding: 0.4rem 0.15rem;
+        padding: 0.4rem 0.38rem;
         border-bottom: 1px solid rgba(93, 28, 106, 0.12);
         font-variant-numeric: tabular-nums;
       }
@@ -77,21 +123,21 @@
         color: var(--pal-root);
       }
       .fb-string-label {
-        text-align: right;
-        padding: 0 0.45rem;
+        text-align: center;
+        padding: 0 0.4rem;
         font-weight: 700;
         font-size: 0.88rem;
         color: var(--pal-root);
         border-right: 3px solid var(--pal-root);
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: center;
         font-family: ui-monospace, "Cascadia Code", monospace;
       }
       .fb-cell {
         position: relative;
         min-height: 2.35rem;
-        min-width: 1.55rem;
+        min-width: 1.85rem;
         border-right: 1px solid rgba(255, 176, 144, 0.65);
         display: flex;
         align-items: center;
@@ -118,10 +164,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.15rem 0.32rem;
+        padding: 0.14rem 0.72rem;
         border-radius: 5px;
         box-shadow: 0 1px 2px rgba(61, 21, 56, 0.12);
-        min-width: 1.45rem;
+        min-width: 1.8rem;
       }
       .fb-mark.fb-scale {
         background: var(--pal-scale-fill);
@@ -154,8 +200,8 @@
         color: var(--pal-muted);
       }
       .fb-grid.fb-simple .fb-mark {
-        padding: 0.1rem 0.22rem;
-        min-width: 1.2rem;
+        padding: 0.1rem 0.48rem;
+        min-width: 1.7rem;
         box-shadow: none;
       }
       .fb-grid.fb-simple .fb-note {
@@ -210,9 +256,7 @@
           </div>
         </div>
         <div class="card-body p-0">
-          <div class="table-responsive">
-            <div id="fretboardMount" class="p-2"></div>
-          </div>
+          <div id="fretboardMount" class="p-2"></div>
         </div>
       </div>
     </main>

@@ -5,6 +5,12 @@ const FRET_MIN = 5;
 const FRET_MAX = 27;
 /** First fret column shown (open string / fret 0 omitted). */
 const FRET_START = 1;
+/** Simple view: wider string column + capped fret width. */
+const FB_STRING_COL_SIMPLE = "3.35rem";
+const FB_FRET_TRACK_SIMPLE = "minmax(1.85rem, min(2.26rem, 8.15vw))";
+/** Informational: original layout (stretches with container). */
+const FB_STRING_COL_INFO = "2.75rem";
+const FB_FRET_TRACK_INFO = "minmax(1.55rem, 1fr)";
 
 const TUNINGS = {
   standard: { label: "Standard (EADGBE)", openMidi: [40, 45, 50, 55, 59, 64] },
@@ -47,8 +53,10 @@ function renderFretboard(mount, opts) {
   const simple = displayMode === "simple";
 
   const grid = document.createElement("div");
-  grid.className = "fb-grid" + (simple ? " fb-simple" : "");
-  grid.style.gridTemplateColumns = `2.75rem repeat(${colCount}, minmax(1.55rem, 1fr))`;
+  grid.className = "fb-grid" + (simple ? " fb-simple" : " fb-informational");
+  grid.style.gridTemplateColumns = simple
+    ? `${FB_STRING_COL_SIMPLE} repeat(${colCount}, ${FB_FRET_TRACK_SIMPLE})`
+    : `${FB_STRING_COL_INFO} repeat(${colCount}, ${FB_FRET_TRACK_INFO})`;
 
   const corner = document.createElement("div");
   corner.setAttribute("aria-hidden", "true");
