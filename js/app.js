@@ -12,6 +12,19 @@ const FB_FRET_TRACK_SIMPLE = "minmax(1.85rem, min(2.26rem, 8.15vw))";
 const FB_STRING_COL_INFO = "2.75rem";
 const FB_FRET_TRACK_INFO = "minmax(1.55rem, 1fr)";
 
+/** Fret markers like a typical guitar fingerboard (single = one dot, 12 = double). */
+const INLAY_FRETS_SINGLE = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
+
+function fretInlayKind(f) {
+  if (f === 12) return "double";
+  if (INLAY_FRETS_SINGLE.has(f)) return "single";
+  return null;
+}
+
+function fretColInlayClass(f) {
+  return fretInlayKind(f) ? " fb-col-inlay" : "";
+}
+
 const TUNINGS = {
   standard: { label: "Standard (EADGBE)", openMidi: [40, 45, 50, 55, 59, 64] },
   dropD: { label: "Drop D", openMidi: [38, 45, 50, 55, 59, 64] },
@@ -64,7 +77,7 @@ function renderFretboard(mount, opts) {
 
   for (let f = FRET_START; f <= lastFret; f++) {
     const hn = document.createElement("div");
-    hn.className = "fb-fret-num" + (f === FRET_START ? " fb-first-fret" : "");
+    hn.className = "fb-fret-num" + (f === FRET_START ? " fb-first-fret" : "") + fretColInlayClass(f);
     hn.textContent = String(f);
     grid.appendChild(hn);
   }
@@ -83,7 +96,7 @@ function renderFretboard(mount, opts) {
       const name = noteLabel(midi);
 
       const cell = document.createElement("div");
-      cell.className = "fb-cell" + (f === FRET_START ? " fb-first-fret" : "");
+      cell.className = "fb-cell" + (f === FRET_START ? " fb-first-fret" : "") + fretColInlayClass(f);
 
       if (!simple && !inScale) {
         const span = document.createElement("span");
@@ -108,6 +121,21 @@ function renderFretboard(mount, opts) {
 
       grid.appendChild(cell);
     }
+  }
+
+  const inlayCorner = document.createElement("div");
+  inlayCorner.className = "fb-inlay-corner";
+  inlayCorner.setAttribute("aria-hidden", "true");
+  grid.appendChild(inlayCorner);
+
+  for (let f = FRET_START; f <= lastFret; f++) {
+    const kind = fretInlayKind(f);
+    const well = document.createElement("div");
+    well.className = "fb-inlay-well";
+    if (kind === "single") well.classList.add("fb-inlay-single");
+    if (kind === "double") well.classList.add("fb-inlay-double");
+    well.setAttribute("aria-hidden", "true");
+    grid.appendChild(well);
   }
 
   mount.appendChild(grid);

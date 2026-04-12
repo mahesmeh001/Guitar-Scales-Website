@@ -122,6 +122,47 @@
         font-weight: 700;
         color: var(--pal-root);
       }
+      /* Fret columns with position markers (inlays): subtle darken */
+      .fb-col-inlay {
+        background: rgba(61, 21, 56, 0.078);
+      }
+      /* Dot row: cream strip with no vertical fret lines — column grid ends at string rows */
+      .fb-inlay-corner {
+        background: var(--pal-fretboard);
+        padding-top: 0.4rem;
+        border-top: 1px solid rgba(93, 28, 106, 0.1);
+      }
+      .fb-inlay-well {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 1.1rem;
+        padding: 0.4rem 0 0.28rem;
+        box-sizing: border-box;
+        background: var(--pal-fretboard);
+        border: none;
+      }
+      .fb-inlay-well.fb-inlay-single::before {
+        content: "";
+        width: 0.36rem;
+        height: 0.36rem;
+        border-radius: 50%;
+        background: rgba(61, 21, 56, 0.52);
+      }
+      .fb-inlay-well.fb-inlay-double {
+        gap: 0.3rem;
+      }
+      .fb-inlay-well.fb-inlay-double::before,
+      .fb-inlay-well.fb-inlay-double::after {
+        content: "";
+        width: 0.34rem;
+        height: 0.34rem;
+        border-radius: 50%;
+        background: rgba(61, 21, 56, 0.52);
+      }
+      .fb-grid.fb-informational .fb-inlay-well {
+        min-width: 0;
+      }
       .fb-string-label {
         text-align: center;
         padding: 0 0.4rem;
