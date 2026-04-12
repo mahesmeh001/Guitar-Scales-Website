@@ -185,6 +185,104 @@ function clampFret(n) {
   return Math.min(FRET_MAX, Math.max(FRET_MIN, Math.round(x)));
 }
 
+function setRootPc(pc, opts) {
+  const rootSel = document.getElementById("rootSelect");
+  const wrap = document.getElementById("rootPicker");
+  if (!rootSel || !wrap) return;
+  const v = String(((pc % 12) + 12) % 12);
+  rootSel.value = v;
+  wrap.querySelectorAll('[role="radio"]').forEach((btn) => {
+    const on = btn.getAttribute("data-pc") === v;
+    btn.setAttribute("aria-checked", on ? "true" : "false");
+  });
+  if (opts && opts.focus) {
+    wrap.querySelector(`[data-pc="${v}"]`)?.focus();
+  }
+  redraw();
+}
+
+function buildRootPicker() {
+  const wrap = document.getElementById("rootPicker");
+  const rootSel = document.getElementById("rootSelect");
+  if (!wrap || !rootSel) return;
+  wrap.replaceChildren();
+
+  NOTE_NAMES.forEach((name, pcVal) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("role", "radio");
+    btn.dataset.pc = String(pcVal);
+    btn.className = "root-note-btn";
+    btn.textContent = name;
+    btn.setAttribute("aria-checked", rootSel.value === String(pcVal) ? "true" : "false");
+    btn.title = name + " — root";
+    btn.addEventListener("click", () => setRootPc(pcVal, { focus: false }));
+    wrap.appendChild(btn);
+  });
+
+  wrap.addEventListener("keydown", (e) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const cur = parseInt(rootSel.value, 10);
+    const n = Number.isFinite(cur) ? cur : 0;
+    let next = n;
+    if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = 11;
+    else if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (n + 1) % 12;
+    else next = (n - 1 + 12) % 12;
+    setRootPc(next, { focus: true });
+  });
+}
+
+function syncScaleQuickPickPressed() {
+  const sel = document.getElementById("scaleSelect");
+  const wrap = document.getElementById("scaleQuickPick");
+  if (!sel || !wrap) return;
+  const v = sel.value;
+  wrap.querySelectorAll(".scale-pill").forEach((btn) => {
+    btn.setAttribute("aria-pressed", btn.getAttribute("data-index") === v ? "true" : "false");
+  });
+}
+
+function buildScaleQuickPick() {
+  const wrap = document.getElementById("scaleQuickPick");
+  const sel = document.getElementById("scaleSelect");
+  if (!wrap || !sel) return;
+  wrap.replaceChildren();
+
+  const common = [];
+  for (let i = 0; i < presets.length; i++) {
+    const p = presets[i];
+    if ((p.Group || "") !== "Common") continue;
+    common.push({ i, p });
+  }
+  common.sort((a, b) => a.p.Name.localeCompare(b.p.Name));
+
+  if (common.length === 0) {
+    const p = document.createElement("p");
+    p.className = "small intro-muted mb-0";
+    p.textContent = "No “Common” scales in the loaded list — use the menu below.";
+    wrap.appendChild(p);
+    return;
+  }
+
+  common.forEach(({ i, p }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "scale-pill";
+    btn.setAttribute("data-index", String(i));
+    btn.setAttribute("aria-pressed", sel.value === String(i) ? "true" : "false");
+    btn.textContent = p.Name;
+    btn.title = p.Name + " (" + (p.Group || "Other") + ")";
+    btn.addEventListener("click", () => {
+      sel.value = String(i);
+      syncScaleQuickPickPressed();
+      redraw();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
 function syncFretInputs(rangeEl, numEl, v) {
   const c = clampFret(v);
   rangeEl.value = String(c);
@@ -272,6 +370,8 @@ function buildScaleSelect(data) {
   }
 
   sel.value = String(defaultPresetIndexForCMajor());
+  buildScaleQuickPick();
+  syncScaleQuickPickPressed();
 }
 
 async function loadScales() {
@@ -311,6 +411,7 @@ function init() {
     rootSel.appendChild(opt);
   });
   rootSel.value = "0";
+  buildRootPicker();
 
   const tuningSel = document.getElementById("tuningSelect");
   tuningSel.replaceChildren();
@@ -343,7 +444,11 @@ function init() {
 
   rootSel.addEventListener("change", redraw);
   tuningSel.addEventListener("change", redraw);
-  document.getElementById("scaleSelect").addEventListener("change", redraw);
+  const scaleSel = document.getElementById("scaleSelect");
+  scaleSel.addEventListener("change", () => {
+    syncScaleQuickPickPressed();
+    redraw();
+  });
   document.getElementById("displayMode").addEventListener("change", redraw);
 
   loadScales();

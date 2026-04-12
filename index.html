@@ -208,6 +208,102 @@
         font-size: 0.68rem;
         font-weight: 700;
       }
+      /* Root + scale pickers (site palette only) */
+      .root-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        align-items: center;
+      }
+      .root-note-btn {
+        appearance: none;
+        cursor: pointer;
+        border-radius: 0.35rem;
+        min-width: 2.25rem;
+        padding: 0.28rem 0.42rem;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        letter-spacing: -0.02em;
+        color: var(--pal-ink);
+        background: var(--pal-fretboard);
+        border: 1px solid rgba(93, 28, 106, 0.22);
+        box-shadow: none;
+        transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease, transform 0.14s ease,
+          box-shadow 0.14s ease;
+      }
+      .root-note-btn:hover {
+        border-color: rgba(202, 89, 149, 0.55);
+        background: #fffdf8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(61, 21, 56, 0.14);
+      }
+      .root-note-btn[aria-checked="true"]:hover {
+        background: var(--pal-root);
+        color: var(--pal-bg);
+        border-color: var(--pal-root);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 16px rgba(93, 28, 106, 0.32);
+      }
+      .root-note-btn:focus-visible {
+        outline: 2px solid var(--pal-root);
+        outline-offset: 2px;
+      }
+      .root-note-btn[aria-checked="true"] {
+        background: var(--pal-root);
+        color: var(--pal-bg);
+        border-color: var(--pal-root);
+      }
+      .scale-quick-pick {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+      .scale-pill {
+        appearance: none;
+        border-radius: 999px;
+        padding: 0.28rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        border: 1px solid rgba(93, 28, 106, 0.22);
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
+        transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease, transform 0.14s ease,
+          box-shadow 0.14s ease;
+      }
+      .scale-pill:hover {
+        border-color: rgba(255, 176, 144, 0.85);
+        background: #fffdf8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(61, 21, 56, 0.14);
+      }
+      .scale-pill[aria-pressed="true"]:hover {
+        background: var(--pal-root);
+        color: var(--pal-bg);
+        border-color: var(--pal-root);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 16px rgba(93, 28, 106, 0.32);
+      }
+      .scale-pill:focus-visible {
+        outline: 2px solid var(--pal-root);
+        outline-offset: 2px;
+      }
+      .scale-pill[aria-pressed="true"] {
+        background: var(--pal-root);
+        color: var(--pal-bg);
+        border-color: var(--pal-root);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .root-note-btn,
+        .scale-pill {
+          transition: none;
+        }
+        .root-note-btn:hover,
+        .scale-pill:hover {
+          transform: none;
+        }
+      }
     </style>
   </head>
   <body class="page-bg">
@@ -225,14 +321,20 @@
 
       <div id="loadError" class="alert alert-themed d-none" role="alert"></div>
 
-      <div class="row g-3 mb-3">
-        <div class="col-md-4">
-          <label for="rootSelect" class="form-label intro-muted">Root</label>
-          <select id="rootSelect" class="form-select form-select-sm"></select>
+      <div class="row g-2 g-lg-3 mb-3 align-items-start">
+        <div class="col-12 col-lg-5 col-xl-4">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="small intro-muted text-nowrap">Root</span>
+            <div id="rootPicker" class="root-picker flex-grow-1" role="radiogroup" aria-label="Root note"></div>
+          </div>
+          <select id="rootSelect" class="form-select form-select-sm visually-hidden" tabindex="-1" aria-hidden="true"></select>
         </div>
-        <div class="col-md-8">
-          <label for="scaleSelect" class="form-label intro-muted">Scale</label>
-          <select id="scaleSelect" class="form-select form-select-sm"></select>
+        <div class="col-12 col-lg-7 col-xl-8">
+          <div class="small intro-muted mb-1">Scale</div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div id="scaleQuickPick" class="scale-quick-pick flex-grow-1 mb-0" role="group" aria-label="Common scales"></div>
+            <select id="scaleSelect" class="form-select form-select-sm flex-grow-1" style="min-width: 10rem; max-width: 22rem"></select>
+          </div>
         </div>
       </div>
 
