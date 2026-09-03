@@ -4,6 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Guitar scales</title>
+    <script>
+      (function () {
+        let theme = "light";
+        try {
+          const saved = localStorage.getItem("guitar-scales-theme");
+          if (saved) {
+            theme = saved;
+          } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+          }
+        } catch (_) {
+          try {
+            if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              theme = "dark";
+            }
+          } catch (__) {}
+        }
+        document.documentElement.setAttribute("data-bs-theme", theme);
+        if (theme === "dark") {
+          document.documentElement.classList.add("theme-dark");
+        } else {
+          document.documentElement.classList.remove("theme-dark");
+        }
+      })();
+    </script>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,74 +36,167 @@
       crossorigin="anonymous"
     />
     <style>
-      :root {
+      :root,
+      [data-bs-theme="light"],
+      .theme-light {
         --pal-bg: #fff1d3;
         /* Fretboard + themed selects: lighter cream than page */
         --pal-fretboard: #fff9ed;
         --pal-mid: #ffb090;
         --pal-key: #ca5995;
         --pal-root: #5d1c6a;
+        --pal-root-ink: #fff1d3;
         --pal-ink: #3d1538;
-        --pal-muted: #7d6a6f;
-        /* Opaque, low-saturation fills for non-root scale tones */
-        --pal-scale-fill: #c9b8cd;
-        --pal-scale-ink: #3f2848;
-        --pal-key-fill: #bf6d91;
-        --pal-key-ink: #fffef8;
+        --pal-muted: #72506e;
+        --pal-scale-fill: rgba(232, 160, 191, 0.45);
+        --pal-scale-ink: #3d1538;
+        --pal-scale-border: rgba(93, 28, 106, 0.38);
+        --pal-key-fill: #ca5995;
+        --pal-key-ink: #fff1d3;
+        --pal-card-bg: #ffffff;
+        --pal-card-header: #faf4e8;
+        --pal-card-border: rgba(93, 28, 106, 0.14);
+        --pal-border-subtle: rgba(93, 28, 106, 0.12);
+        --pal-border-control: rgba(93, 28, 106, 0.28);
+        --pal-border-focus: rgba(93, 28, 106, 0.55);
+        --pal-focus-ring: rgba(93, 28, 106, 0.2);
+        --pal-grid-border: rgba(93, 28, 106, 0.45);
+        --pal-fret-wire: rgba(93, 28, 106, 0.22);
+        --pal-string-wire: rgba(255, 176, 144, 0.88);
+        --pal-first-fret-border: rgba(93, 28, 106, 0.35);
+        --pal-inlay-col: rgba(61, 21, 56, 0.078);
+        --pal-inlay-dot: rgba(61, 21, 56, 0.52);
+        --pal-inlay-glow: none;
+        --pal-outside: #7d6a6f;
+        --pal-btn-hover-bg: #fffdf8;
+        --pal-btn-hover-shadow: rgba(61, 21, 56, 0.14);
+        --pal-btn-checked-shadow: rgba(93, 28, 106, 0.32);
+        --pal-navbar-bg: #5d1c6a;
+        --pal-navbar-brand: #fff1d3;
+        --pal-navbar-border: transparent;
+        --pal-toggle-bg: rgba(255, 241, 211, 0.18);
+        --pal-toggle-border: rgba(255, 241, 211, 0.35);
+        --pal-toggle-text: #fff1d3;
+        --pal-toggle-hover-bg: rgba(255, 241, 211, 0.3);
+        --pal-alert-bg: rgba(255, 176, 144, 0.35);
+        --pal-alert-border: rgba(202, 89, 149, 0.45);
       }
+
+      [data-bs-theme="dark"],
+      .theme-dark {
+        --pal-bg: #131018;
+        --pal-fretboard: #1c1724;
+        --pal-mid: #5c4566;
+        --pal-key: #d65d9a;
+        --pal-root: #9c3cbd;
+        --pal-root-ink: #ffffff;
+        --pal-ink: #f2edf5;
+        --pal-muted: #a395ab;
+        --pal-scale-fill: #392e44;
+        --pal-scale-ink: #ede4f2;
+        --pal-scale-border: rgba(180, 140, 210, 0.2);
+        --pal-key-fill: #ad3e77;
+        --pal-key-ink: #ffffff;
+        --pal-card-bg: #1a1523;
+        --pal-card-header: #221b2d;
+        --pal-card-border: rgba(168, 85, 247, 0.22);
+        --pal-border-subtle: rgba(168, 85, 247, 0.14);
+        --pal-border-control: rgba(168, 85, 247, 0.28);
+        --pal-border-focus: rgba(192, 132, 252, 0.55);
+        --pal-focus-ring: rgba(168, 85, 247, 0.22);
+        --pal-grid-border: rgba(168, 85, 247, 0.25);
+        --pal-fret-wire: rgba(160, 135, 185, 0.24);
+        --pal-string-wire: rgba(215, 195, 235, 0.38);
+        --pal-first-fret-border: rgba(192, 132, 252, 0.45);
+        --pal-inlay-col: rgba(255, 255, 255, 0.032);
+        --pal-inlay-dot: rgba(240, 230, 252, 0.85);
+        --pal-inlay-glow: 0 0 3px rgba(220, 195, 250, 0.4);
+        --pal-outside: #73677e;
+        --pal-btn-hover-bg: #272033;
+        --pal-btn-hover-shadow: rgba(0, 0, 0, 0.45);
+        --pal-btn-checked-shadow: rgba(168, 85, 247, 0.42);
+        --pal-navbar-bg: #1a1324;
+        --pal-navbar-brand: #f2edf5;
+        --pal-navbar-border: rgba(168, 85, 247, 0.22);
+        --pal-toggle-bg: rgba(168, 85, 247, 0.16);
+        --pal-toggle-border: rgba(192, 132, 252, 0.35);
+        --pal-toggle-text: #f2edf5;
+        --pal-toggle-hover-bg: rgba(168, 85, 247, 0.3);
+        --pal-alert-bg: rgba(156, 60, 189, 0.22);
+        --pal-alert-border: rgba(192, 132, 252, 0.4);
+      }
+
       body.page-bg {
         background-color: var(--pal-bg) !important;
         color: var(--pal-ink);
+        transition: background-color 0.2s ease, color 0.2s ease;
       }
       .navbar-themed {
-        background-color: var(--pal-root) !important;
+        background-color: var(--pal-navbar-bg) !important;
+        border-bottom: 1px solid var(--pal-navbar-border);
+        transition: background-color 0.2s ease, border-color 0.2s ease;
       }
       .navbar-themed .navbar-brand {
-        color: var(--pal-bg) !important;
+        color: var(--pal-navbar-brand) !important;
         font-weight: 600;
         font-size: 1.15rem;
       }
       .intro-muted {
         color: var(--pal-muted);
       }
+      .intro-muted strong {
+        color: var(--pal-ink);
+      }
       .card-themed {
-        background: #fffdf8;
-        border: 1px solid rgba(93, 28, 106, 0.14);
+        background: var(--pal-card-bg);
+        border: 1px solid var(--pal-card-border);
+        transition: background-color 0.2s ease, border-color 0.2s ease;
       }
       .card-themed .card-header {
-        background: rgba(255, 241, 211, 0.55);
-        border-bottom: 1px solid rgba(93, 28, 106, 0.1);
+        background: var(--pal-card-header);
+        border-bottom: 1px solid var(--pal-border-subtle);
+        transition: background-color 0.2s ease, border-color 0.2s ease;
       }
       .card-themed .form-control {
-        border-color: rgba(93, 28, 106, 0.2);
+        border-color: var(--pal-border-control);
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
+      }
+      .card-themed .form-control:focus {
+        border-color: var(--pal-border-focus);
+        background-color: var(--pal-fretboard);
+        color: var(--pal-ink);
+        box-shadow: 0 0 0 0.2rem var(--pal-focus-ring);
       }
       /* All page selects (root/scale live outside .card-themed) */
       main .form-select {
-        border-color: rgba(93, 28, 106, 0.2);
+        border-color: var(--pal-border-control);
         background-color: var(--pal-fretboard);
         color: var(--pal-ink);
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
       }
       main .form-select:focus {
         background-color: var(--pal-fretboard);
         color: var(--pal-ink);
-        border-color: rgba(93, 28, 106, 0.35);
-        box-shadow: 0 0 0 0.2rem rgba(93, 28, 106, 0.12);
+        border-color: var(--pal-border-focus);
+        box-shadow: 0 0 0 0.2rem var(--pal-focus-ring);
       }
       main .form-select option {
         background-color: var(--pal-fretboard);
         color: var(--pal-ink);
       }
       .alert-themed {
-        background: rgba(255, 176, 144, 0.35);
-        border-color: rgba(202, 89, 149, 0.45);
+        background: var(--pal-alert-bg);
+        border-color: var(--pal-alert-border);
         color: var(--pal-ink);
       }
-      /* Scroll/center on wrapper so the grid isn’t offset by nested overflow + auto margins */
+      /* Scroll/center on wrapper so the grid isn't offset by nested overflow + auto margins */
       #fretboardMount {
         display: flex;
         justify-content: center;
         overflow-x: auto;
         background: var(--pal-fretboard);
+        transition: background-color 0.2s ease;
       }
       .fb-grid {
         display: grid;
@@ -86,9 +204,10 @@
         max-width: none;
         flex: 0 0 auto;
         background: var(--pal-fretboard);
-        border: 1px solid rgba(255, 176, 144, 0.55);
+        border: 1px solid var(--pal-grid-border);
         border-radius: 0.35rem;
         user-select: none;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
       }
       /* Informational: full card width so minmax(..., 1fr) matches original stretch behavior */
       .fb-grid.fb-informational {
@@ -115,22 +234,33 @@
         font-size: 0.68rem;
         color: var(--pal-muted);
         padding: 0.4rem 0.38rem;
-        border-bottom: 1px solid rgba(93, 28, 106, 0.12);
+        border-bottom: 1px solid var(--pal-border-subtle);
         font-variant-numeric: tabular-nums;
       }
       .fb-fret-num.fb-first-fret {
         font-weight: 700;
         color: var(--pal-root);
       }
+      /* Dark mode fretboard numbers: pure white instead of grey */
+      [data-bs-theme="dark"] .fb-fret-num,
+      .theme-dark .fb-fret-num {
+        color: #ffffff !important;
+        font-weight: 600;
+      }
+      [data-bs-theme="dark"] .fb-fret-num.fb-first-fret,
+      .theme-dark .fb-fret-num.fb-first-fret {
+        color: #ffffff !important;
+        font-weight: 700;
+      }
       /* Fret columns with position markers (inlays): subtle darken */
       .fb-col-inlay {
-        background: rgba(61, 21, 56, 0.078);
+        background: var(--pal-inlay-col);
       }
-      /* Dot row: cream strip with no vertical fret lines — column grid ends at string rows */
+      /* Dot row: strip with no vertical fret lines — column grid ends at string rows */
       .fb-inlay-corner {
         background: var(--pal-fretboard);
         padding-top: 0.4rem;
-        border-top: 1px solid rgba(93, 28, 106, 0.1);
+        border-top: 1px solid var(--pal-border-subtle);
       }
       .fb-inlay-well {
         display: flex;
@@ -147,7 +277,8 @@
         width: 0.36rem;
         height: 0.36rem;
         border-radius: 50%;
-        background: rgba(61, 21, 56, 0.52);
+        background: var(--pal-inlay-dot);
+        box-shadow: var(--pal-inlay-glow);
       }
       .fb-inlay-well.fb-inlay-double {
         gap: 0.3rem;
@@ -158,7 +289,8 @@
         width: 0.34rem;
         height: 0.34rem;
         border-radius: 50%;
-        background: rgba(61, 21, 56, 0.52);
+        background: var(--pal-inlay-dot);
+        box-shadow: var(--pal-inlay-glow);
       }
       .fb-grid.fb-informational .fb-inlay-well {
         min-width: 0;
@@ -179,13 +311,13 @@
         position: relative;
         min-height: 2.35rem;
         min-width: 1.85rem;
-        border-right: 1px solid rgba(255, 176, 144, 0.65);
+        border-right: 1px solid var(--pal-fret-wire);
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .fb-cell.fb-first-fret {
-        border-left: 2px solid rgba(93, 28, 106, 0.35);
+        border-left: 2px solid var(--pal-first-fret-border);
       }
       /* String line: same in Simple and Informational (tab staff only; not “highlighted”) */
       .fb-cell::before {
@@ -196,7 +328,7 @@
         top: 50%;
         height: 1px;
         margin-top: -0.5px;
-        background: rgba(255, 176, 144, 0.88);
+        background: var(--pal-string-wire);
         z-index: 0;
       }
       .fb-mark {
@@ -207,22 +339,23 @@
         justify-content: center;
         padding: 0.14rem 0.72rem;
         border-radius: 5px;
-        box-shadow: 0 1px 2px rgba(61, 21, 56, 0.12);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
         min-width: 1.8rem;
       }
       .fb-mark.fb-scale {
         background: var(--pal-scale-fill);
         color: var(--pal-scale-ink);
+        border: 1px solid var(--pal-scale-border);
       }
       .fb-mark.fb-key {
         background: var(--pal-key-fill);
         color: var(--pal-key-ink);
-        box-shadow: 0 1px 3px rgba(93, 28, 106, 0.18);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
       }
       .fb-mark.fb-root {
         background: var(--pal-root);
-        color: var(--pal-bg);
-        box-shadow: 0 1px 4px rgba(61, 21, 56, 0.25);
+        color: var(--pal-root-ink);
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.28);
       }
       .fb-note {
         font-weight: 800;
@@ -238,7 +371,7 @@
         z-index: 1;
         font-size: 0.65rem;
         font-weight: 500;
-        color: var(--pal-muted);
+        color: var(--pal-outside);
       }
       .fb-grid.fb-simple .fb-mark {
         padding: 0.1rem 0.48rem;
@@ -267,23 +400,23 @@
         letter-spacing: -0.02em;
         color: var(--pal-ink);
         background: var(--pal-fretboard);
-        border: 1px solid rgba(93, 28, 106, 0.22);
+        border: 1px solid var(--pal-border-control);
         box-shadow: none;
         transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease, transform 0.14s ease,
           box-shadow 0.14s ease;
       }
       .root-note-btn:hover {
-        border-color: rgba(202, 89, 149, 0.55);
-        background: #fffdf8;
+        border-color: var(--pal-key);
+        background: var(--pal-btn-hover-bg);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(61, 21, 56, 0.14);
+        box-shadow: 0 4px 12px var(--pal-btn-hover-shadow);
       }
       .root-note-btn[aria-checked="true"]:hover {
         background: var(--pal-root);
-        color: var(--pal-bg);
+        color: var(--pal-root-ink);
         border-color: var(--pal-root);
         transform: translateY(-2px);
-        box-shadow: 0 5px 16px rgba(93, 28, 106, 0.32);
+        box-shadow: 0 5px 16px var(--pal-btn-checked-shadow);
       }
       .root-note-btn:focus-visible {
         outline: 2px solid var(--pal-root);
@@ -291,7 +424,7 @@
       }
       .root-note-btn[aria-checked="true"] {
         background: var(--pal-root);
-        color: var(--pal-bg);
+        color: var(--pal-root-ink);
         border-color: var(--pal-root);
       }
       .scale-quick-pick {
@@ -307,24 +440,24 @@
         font-weight: 600;
         font-size: 0.8125rem;
         cursor: pointer;
-        border: 1px solid rgba(93, 28, 106, 0.22);
+        border: 1px solid var(--pal-border-control);
         background-color: var(--pal-fretboard);
         color: var(--pal-ink);
         transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease, transform 0.14s ease,
           box-shadow 0.14s ease;
       }
       .scale-pill:hover {
-        border-color: rgba(255, 176, 144, 0.85);
-        background: #fffdf8;
+        border-color: var(--pal-mid);
+        background: var(--pal-btn-hover-bg);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(61, 21, 56, 0.14);
+        box-shadow: 0 4px 12px var(--pal-btn-hover-shadow);
       }
       .scale-pill[aria-pressed="true"]:hover {
         background: var(--pal-root);
-        color: var(--pal-bg);
+        color: var(--pal-root-ink);
         border-color: var(--pal-root);
         transform: translateY(-2px);
-        box-shadow: 0 5px 16px rgba(93, 28, 106, 0.32);
+        box-shadow: 0 5px 16px var(--pal-btn-checked-shadow);
       }
       .scale-pill:focus-visible {
         outline: 2px solid var(--pal-root);
@@ -332,16 +465,79 @@
       }
       .scale-pill[aria-pressed="true"] {
         background: var(--pal-root);
-        color: var(--pal-bg);
+        color: var(--pal-root-ink);
         border-color: var(--pal-root);
       }
+      /* Theme toggle button in navbar */
+      .theme-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.95rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+        line-height: 1.4;
+        background-color: #ffffff !important;
+        color: #5d1c6a !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .theme-toggle-btn:hover {
+        transform: translateY(-1px);
+        background-color: #fff9ed !important;
+        color: #4a1555 !important;
+        border-color: #fff9ed !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28) !important;
+      }
+      .theme-toggle-btn:active {
+        transform: translateY(0);
+      }
+      .theme-toggle-btn:focus-visible {
+        outline: 2px solid var(--pal-root);
+        outline-offset: 2px;
+      }
+      [data-bs-theme="dark"] .theme-toggle-btn,
+      .theme-dark .theme-toggle-btn {
+        background-color: #2b1f3b !important;
+        color: #f2edf5 !important;
+        border: 1.5px solid rgba(192, 132, 252, 0.5) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+      }
+      [data-bs-theme="dark"] .theme-toggle-btn:hover,
+      .theme-dark .theme-toggle-btn:hover {
+        background-color: #38284e !important;
+        border-color: rgba(216, 180, 254, 0.7) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+      }
+      /* Range thumb in dark mode */
+      [data-bs-theme="dark"] .form-range::-webkit-slider-thumb,
+      .theme-dark .form-range::-webkit-slider-thumb {
+        background-color: var(--pal-root);
+      }
+      [data-bs-theme="dark"] .form-range::-moz-range-thumb,
+      .theme-dark .form-range::-moz-range-thumb {
+        background-color: var(--pal-root);
+      }
       @media (prefers-reduced-motion: reduce) {
+        body,
+        .navbar-themed,
+        .card-themed,
+        .card-header,
+        .form-select,
+        .form-control,
         .root-note-btn,
-        .scale-pill {
-          transition: none;
+        .scale-pill,
+        .theme-toggle-btn {
+          transition: none !important;
         }
         .root-note-btn:hover,
-        .scale-pill:hover {
+        .scale-pill:hover,
+        .theme-toggle-btn:hover {
           transform: none;
         }
       }
@@ -349,8 +545,17 @@
   </head>
   <body class="page-bg">
     <nav class="navbar navbar-expand navbar-themed">
-      <div class="container">
+      <div class="container d-flex justify-content-between align-items-center">
         <span class="navbar-brand mb-0 h1">Guitar scales</span>
+        <button
+          id="themeToggleBtn"
+          class="btn theme-toggle-btn"
+          type="button"
+          aria-label="Switch to dark mode"
+          title="Switch to dark mode"
+        >
+          <span id="themeToggleText">Dark mode</span>
+        </button>
       </div>
     </nav>
 
@@ -404,6 +609,7 @@
       </div>
     </main>
 
+    <script src="js/scales-data.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

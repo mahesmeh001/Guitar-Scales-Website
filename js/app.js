@@ -404,6 +404,19 @@ function buildScaleSelect(data) {
 
 async function loadScales() {
   const warn = document.getElementById("loadError");
+
+  // 1. Pre-loaded via js/scales-data.js (avoids CORS issues on file:// protocol)
+  if (typeof window !== "undefined" && window.SCALES_DATA && window.SCALES_DATA.presets && window.SCALES_DATA.presets.length) {
+    buildScaleSelect(window.SCALES_DATA);
+    if (warn) {
+      warn.classList.add("d-none");
+      warn.replaceChildren();
+    }
+    redraw();
+    return;
+  }
+
+  // 2. Fetch if hosted on web server
   const urls = ["Scales.json", "./Scales.json"];
   for (const url of urls) {
     try {
@@ -412,17 +425,23 @@ async function loadScales() {
       const data = await r.json();
       if (data.presets && data.presets.length) {
         buildScaleSelect(data);
-        warn.classList.add("d-none");
+        if (warn) {
+          warn.classList.add("d-none");
+          warn.replaceChildren();
+        }
         redraw();
         return;
       }
     } catch (_) {
-      /* file:// or missing file */
+      /* file:// or network error */
     }
   }
-  warn.textContent =
-    "Could not load Scales.json (open via a local server from this folder, e.g. python3 -m http.server). Using a small built-in scale list.";
-  warn.classList.remove("d-none");
+
+  // 3. Graceful fallback without showing confusing server warning
+  if (warn) {
+    warn.classList.add("d-none");
+    warn.replaceChildren();
+  }
   buildScaleSelect({ presets: FALLBACK_PRESETS });
   redraw();
 }
@@ -479,7 +498,69 @@ function init() {
   });
   document.getElementById("displayMode").addEventListener("change", redraw);
 
+  initTheme();
   loadScales();
+}
+
+function initTheme() {
+  const toggleBtn = document.getElementById("themeToggleBtn");
+  const toggleText = document.getElementById("themeToggleText");
+  if (!toggleBtn) return;
+
+  function getEffectiveTheme() {
+    return (
+      document.documentElement.getAttribute("data-bs-theme") ||
+      (document.documentElement.classList.contains("theme-dark") ? "dark" : "light")
+    );
+  }
+
+  function updateToggleUI(theme) {
+    const isDark = theme === "dark";
+    const nextTheme = isDark ? "light" : "dark";
+    const label = `Switch to ${nextTheme} mode`;
+    const text = isDark ? "Light mode" : "Dark mode";
+
+    toggleBtn.setAttribute("aria-label", label);
+    toggleBtn.setAttribute("title", label);
+    toggleBtn.setAttribute("aria-pressed", isDark ? "true" : "false");
+    if (toggleText) {
+      toggleText.textContent = text;
+    }
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-bs-theme", theme);
+    if (theme === "dark") {
+      document.documentElement.classList.add("theme-dark");
+      document.documentElement.classList.remove("theme-light");
+    } else {
+      document.documentElement.classList.remove("theme-dark");
+      document.documentElement.classList.add("theme-light");
+    }
+    updateToggleUI(theme);
+  }
+
+  applyTheme(getEffectiveTheme());
+
+  toggleBtn.addEventListener("click", () => {
+    const cur = getEffectiveTheme();
+    const next = cur === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try {
+      localStorage.setItem("guitar-scales-theme", next);
+    } catch (_) {}
+  });
+
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      try {
+        if (!localStorage.getItem("guitar-scales-theme")) {
+          const next = e.matches ? "dark" : "light";
+          applyTheme(next);
+        }
+      } catch (_) {}
+    });
+  }
 }
 
 if (document.readyState === "loading") {
