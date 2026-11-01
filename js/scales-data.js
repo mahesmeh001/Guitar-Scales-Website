@@ -17,7 +17,7 @@ window.SCALES_DATA = {
                },
                {
                "Name": "Major Pentatonic",
-               "Value": "1;3;5;8;9",
+               "Value": "1;3;5;8;10",
                "Group": "Common"
                },
                {
