@@ -56,6 +56,9 @@
         --pal-sig-fill: #cfe8e4;
         --pal-sig-ink: #1f4f4b;
         --pal-sig-border: rgba(31, 110, 104, 0.4);
+        --pal-fifth-fill: #f5e2b3;
+        --pal-fifth-ink: #5f430c;
+        --pal-fifth-border: rgba(150, 105, 20, 0.4);
         --pal-card-bg: #ffffff;
         --pal-card-header: #faf4e8;
         --pal-card-border: rgba(93, 28, 106, 0.14);
@@ -103,6 +106,9 @@
         --pal-sig-fill: #2c4a4a;
         --pal-sig-ink: #d4eeea;
         --pal-sig-border: rgba(120, 200, 190, 0.25);
+        --pal-fifth-fill: #4a3d22;
+        --pal-fifth-ink: #f3e2b8;
+        --pal-fifth-border: rgba(230, 190, 110, 0.25);
         --pal-card-bg: #1a1523;
         --pal-card-header: #221b2d;
         --pal-card-border: rgba(168, 85, 247, 0.22);
@@ -363,6 +369,11 @@
         color: var(--pal-sig-ink);
         border: 1px solid var(--pal-sig-border);
       }
+      .fb-mark.fb-fifth {
+        background: var(--pal-fifth-fill);
+        color: var(--pal-fifth-ink);
+        border: 1px solid var(--pal-fifth-border);
+      }
       .fb-mark.fb-root {
         background: var(--pal-root);
         color: var(--pal-root-ink);
@@ -514,6 +525,11 @@
         background: var(--pal-sig-fill);
         color: var(--pal-sig-ink);
         border-color: var(--pal-sig-border);
+      }
+      .note-toggle.is-fifth[aria-pressed="true"] {
+        background: var(--pal-fifth-fill);
+        color: var(--pal-fifth-ink);
+        border-color: var(--pal-fifth-border);
       }
       .note-toggle.is-root {
         background: var(--pal-root);

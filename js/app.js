@@ -57,8 +57,16 @@ function stringLabel(openStringMidi, s) {
 }
 
 function renderFretboard(mount, opts) {
-  const { openStringMidi, scalePitchClasses, keyPitchClasses, signaturePitchClasses, rootPitchClass, maxFret, displayMode } =
-    opts;
+  const {
+    openStringMidi,
+    scalePitchClasses,
+    keyPitchClasses,
+    signaturePitchClasses,
+    fifthPitchClass,
+    rootPitchClass,
+    maxFret,
+    displayMode,
+  } = opts;
   if (!mount) return;
   mount.replaceChildren();
 
@@ -108,12 +116,13 @@ function renderFretboard(mount, opts) {
       } else if (inScale) {
         let tier = "scale";
         if (isRoot) tier = "root";
+        else if (p === fifthPitchClass) tier = "fifth";
         else if (signaturePitchClasses.has(p)) tier = "sig";
         else if (displayMode === "informational" && keyPitchClasses.has(p)) tier = "key";
 
         const mark = document.createElement("div");
         mark.className = "fb-mark fb-" + tier;
-        mark.title = name + " · fret " + f + (tier === "key" ? " · chord tone" : tier === "sig" ? " · signature note" : "");
+        mark.title = name + " · fret " + f + (tier === "key" ? " · chord tone" : tier === "sig" ? " · emphasized note" : tier === "fifth" ? " · 5th" : "");
         const noteEl = document.createElement("span");
         noteEl.className = "fb-note";
         noteEl.textContent = name;
@@ -209,22 +218,38 @@ function keyPitchClassesFromPattern(rootPc, offsetSet) {
   return pcs;
 }
 
-const MAJOR_OFFSETS = new Set([0, 2, 4, 5, 7, 9, 11]);
-const MINOR_OFFSETS = new Set([0, 2, 3, 5, 7, 8, 10]);
-/** Beyond this many differences from major/minor, a scale is too far off for "signature notes" to mean much. */
-const SIGNATURE_MAX = 3;
-
 /**
- * Signature notes: what makes a scale sound unlike plain major or natural minor.
- * Compare against whichever of the two it's closest to; the notes not in that parent are the signature.
- * e.g. Dorian → 6, Lydian → #4, Phrygian → b2, Mixolydian → b7, minor blues → b5. Major/minor/pentatonics → none.
+ * Commonly emphasized notes per scale, as semitone offsets from the root, taken from guitar/theory
+ * lessons. The perfect 5th is always emphasized too, in its own color (see PERFECT_FIFTH).
+ *   Major: 3 and 7   Minor: b3 and b6
+ *   Modes: Dorian 6, Phrygian b2, Lydian #4, Mixolydian b7, Locrian b5
+ *   Harmonic minor: 7 · Melodic minor: 6 and 7 · Phrygian dominant: b2 and 3
+ *   Blues: minor blues b5 (blue note), major blues b3 · Pentatonics: 3rd
  */
-function signatureOffsets(offsetSet) {
-  const diff = (parent) => [...offsetSet].filter((o) => !parent.has(o));
-  const vsMajor = diff(MAJOR_OFFSETS);
-  const vsMinor = diff(MINOR_OFFSETS);
-  const best = vsMinor.length < vsMajor.length ? vsMinor : vsMajor;
-  return new Set(best.length <= SIGNATURE_MAX ? best : []);
+const EMPHASIS_BY_NAME = {
+  Major: [4, 11],
+  Minor: [3, 8],
+  Dorian: [9],
+  Phrygian: [1],
+  Lydian: [6],
+  Mixolydian: [10],
+  "Locrian - B to A Ascending": [6],
+  "Harmonic Minor": [11],
+  "Minor Melodic": [9, 11],
+  "Phrygian Dominant": [1, 4],
+  "Minor Blues": [6],
+  "Major Blues": [3],
+  "Major Pentatonic": [4],
+  "Blues Pentatonic Minor": [3],
+};
+
+const PERFECT_FIFTH = 7;
+
+/** Emphasized offsets for the current preset, limited to notes still in the (possibly edited) scale. */
+function emphasisOffsets(offsetSet) {
+  const idx = currentPresetIndex();
+  const list = (idx >= 0 && EMPHASIS_BY_NAME[presets[idx].Name]) || [];
+  return new Set(list.filter((o) => offsetSet.has(o)));
 }
 
 function clampFret(n) {
@@ -392,7 +417,8 @@ function getState() {
     rootPitchClass: rootPc,
     scalePitchClasses: scalePitchClassesFromOffsets(rootPc, offsets),
     keyPitchClasses: keyPitchClassesFromPattern(rootPc, offsets),
-    signaturePitchClasses: scalePitchClassesFromOffsets(rootPc, signatureOffsets(offsets)),
+    signaturePitchClasses: scalePitchClassesFromOffsets(rootPc, emphasisOffsets(offsets)),
+    fifthPitchClass: offsets.has(PERFECT_FIFTH) ? (rootPc + PERFECT_FIFTH) % 12 : -1,
     openStringMidi: tuning.openMidi,
   };
 }
@@ -420,7 +446,7 @@ function renderNoteEditor(rootPc) {
   if (!wrap) return;
   const base = presetOffsets();
   const cur = customOffsets || base;
-  const sig = signatureOffsets(cur);
+  const sig = emphasisOffsets(cur);
   wrap.replaceChildren();
 
   NOTE_NAMES.forEach((name, pcVal) => {
@@ -437,7 +463,8 @@ function renderNoteEditor(rootPc) {
       btn.disabled = true;
       btn.title = name + " — root (change it with the root picker)";
     } else {
-      if (sig.has(off)) btn.classList.add("is-signature");
+      if (on && off === PERFECT_FIFTH) btn.classList.add("is-fifth");
+      else if (sig.has(off)) btn.classList.add("is-signature");
       if (on && !inBase) btn.classList.add("is-added");
       if (!on && inBase) btn.classList.add("is-removed");
       btn.title = (on ? "Remove " : "Add ") + name;
