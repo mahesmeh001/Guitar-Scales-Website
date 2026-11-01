@@ -92,7 +92,7 @@ window.SCALES_DATA = {
                },
                {
                "Name": "Nohkan",
-               "Value": "1;3;6;7;9;10.12",
+               "Value": "1;3;6;7;9;10;12",
                "Group": "Asia"
                },
                {
@@ -1367,7 +1367,7 @@ window.SCALES_DATA = {
                },
                {
                "Name": "Messiaen Mode 7 Inverse",
-               "Value": "1;3;4;5;6;79;10;11;12",
+               "Value": "1;3;4;5;6;7;9;10;11;12",
                "Group": "Other"
                },
                {
