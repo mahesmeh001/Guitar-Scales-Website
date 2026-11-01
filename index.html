@@ -48,11 +48,14 @@
         --pal-root-ink: #fff1d3;
         --pal-ink: #3d1538;
         --pal-muted: #72506e;
-        --pal-scale-fill: rgba(232, 160, 191, 0.45);
+        --pal-scale-fill: #f5d1d8; /* opaque so the string line doesn't show through */
         --pal-scale-ink: #3d1538;
         --pal-scale-border: rgba(93, 28, 106, 0.38);
         --pal-key-fill: #ca5995;
         --pal-key-ink: #fff1d3;
+        --pal-sig-fill: #cfe8e4;
+        --pal-sig-ink: #1f4f4b;
+        --pal-sig-border: rgba(31, 110, 104, 0.4);
         --pal-card-bg: #ffffff;
         --pal-card-header: #faf4e8;
         --pal-card-border: rgba(93, 28, 106, 0.14);
@@ -97,6 +100,9 @@
         --pal-scale-border: rgba(180, 140, 210, 0.2);
         --pal-key-fill: #ad3e77;
         --pal-key-ink: #ffffff;
+        --pal-sig-fill: #2c4a4a;
+        --pal-sig-ink: #d4eeea;
+        --pal-sig-border: rgba(120, 200, 190, 0.25);
         --pal-card-bg: #1a1523;
         --pal-card-header: #221b2d;
         --pal-card-border: rgba(168, 85, 247, 0.22);
@@ -352,6 +358,11 @@
         color: var(--pal-key-ink);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
       }
+      .fb-mark.fb-sig {
+        background: var(--pal-sig-fill);
+        color: var(--pal-sig-ink);
+        border: 1px solid var(--pal-sig-border);
+      }
       .fb-mark.fb-root {
         background: var(--pal-root);
         color: var(--pal-root-ink);
@@ -468,6 +479,113 @@
         color: var(--pal-root-ink);
         border-color: var(--pal-root);
       }
+      /* Note editor + suggestions */
+      .note-editor {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.3rem;
+      }
+      .note-toggle {
+        appearance: none;
+        cursor: pointer;
+        border-radius: 0.35rem;
+        padding: 0.3rem 0;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        color: var(--pal-muted);
+        background: var(--pal-fretboard);
+        border: 1px solid var(--pal-border-control);
+        transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+      }
+      .note-toggle:hover:not(:disabled) {
+        border-color: var(--pal-key);
+        background: var(--pal-btn-hover-bg);
+      }
+      .note-toggle:focus-visible {
+        outline: 2px solid var(--pal-root);
+        outline-offset: 2px;
+      }
+      .note-toggle[aria-pressed="true"] {
+        background: var(--pal-scale-fill);
+        color: var(--pal-scale-ink);
+        border-color: var(--pal-scale-border);
+      }
+      .note-toggle.is-signature[aria-pressed="true"] {
+        background: var(--pal-sig-fill);
+        color: var(--pal-sig-ink);
+        border-color: var(--pal-sig-border);
+      }
+      .note-toggle.is-root {
+        background: var(--pal-root);
+        color: var(--pal-root-ink);
+        border-color: var(--pal-root);
+        cursor: default;
+        opacity: 1;
+      }
+      .note-toggle.is-added {
+        box-shadow: inset 0 0 0 2px var(--pal-key);
+      }
+      .note-toggle.is-removed {
+        border-style: dashed;
+        border-color: var(--pal-key);
+        text-decoration: line-through;
+      }
+      .reset-notes-btn {
+        padding: 0.1rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 999px;
+        color: var(--pal-ink);
+        background: var(--pal-fretboard);
+        border: 1px solid var(--pal-border-control);
+      }
+      .reset-notes-btn:hover {
+        border-color: var(--pal-key);
+        color: var(--pal-ink);
+        background: var(--pal-btn-hover-bg);
+      }
+      .suggestion-list {
+        max-height: 24rem;
+        overflow-y: auto;
+        padding-right: 0.15rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .suggestion-item {
+        appearance: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        padding: 0.3rem 0.5rem;
+        border-radius: 0.35rem;
+        font-size: 0.8125rem;
+        color: var(--pal-ink);
+        background: var(--pal-fretboard);
+        border: 1px solid var(--pal-border-subtle);
+        transition: border-color 0.14s ease, background-color 0.14s ease;
+      }
+      .suggestion-item:hover {
+        border-color: var(--pal-key);
+        background: var(--pal-btn-hover-bg);
+      }
+      .suggestion-item:focus-visible {
+        outline: 2px solid var(--pal-root);
+        outline-offset: 2px;
+      }
+      .suggestion-name {
+        font-weight: 600;
+      }
+      .suggestion-meta {
+        flex-shrink: 0;
+        font-size: 0.72rem;
+        color: var(--pal-muted);
+        font-variant-numeric: tabular-nums;
+      }
       /* Theme toggle button in navbar */
       .theme-toggle-btn {
         display: inline-flex;
@@ -583,6 +701,8 @@
         </div>
       </div>
 
+      <div class="row g-3">
+      <div class="col-12 col-xl-9">
       <div class="card shadow-sm card-themed">
         <div class="card-header py-2 d-flex flex-wrap align-items-center gap-3 justify-content-between">
           <div class="d-flex flex-wrap align-items-center gap-2">
@@ -605,6 +725,22 @@
         <div class="card-body p-0">
           <div id="fretboardMount" class="p-2"></div>
         </div>
+      </div>
+      </div>
+
+      <div class="col-12 col-xl-3">
+        <aside class="card shadow-sm card-themed" aria-label="Edit notes and suggested scales">
+          <div class="card-header py-2 d-flex align-items-center justify-content-between gap-2">
+            <span class="small fw-semibold">Notes</span>
+            <button id="resetNotesBtn" type="button" class="btn btn-sm reset-notes-btn d-none">Reset edits</button>
+          </div>
+          <div class="card-body p-2">
+            <div id="noteEditor" class="note-editor" role="group" aria-label="Toggle scale notes"></div>
+            <div class="small intro-muted mt-3 mb-1">Suggested scales</div>
+            <div id="suggestionList" class="suggestion-list"></div>
+          </div>
+        </aside>
+      </div>
       </div>
     </main>
 

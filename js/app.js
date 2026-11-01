@@ -57,7 +57,8 @@ function stringLabel(openStringMidi, s) {
 }
 
 function renderFretboard(mount, opts) {
-  const { openStringMidi, scalePitchClasses, keyPitchClasses, rootPitchClass, maxFret, displayMode } = opts;
+  const { openStringMidi, scalePitchClasses, keyPitchClasses, signaturePitchClasses, rootPitchClass, maxFret, displayMode } =
+    opts;
   if (!mount) return;
   mount.replaceChildren();
 
@@ -107,11 +108,12 @@ function renderFretboard(mount, opts) {
       } else if (inScale) {
         let tier = "scale";
         if (isRoot) tier = "root";
+        else if (signaturePitchClasses.has(p)) tier = "sig";
         else if (displayMode === "informational" && keyPitchClasses.has(p)) tier = "key";
 
         const mark = document.createElement("div");
         mark.className = "fb-mark fb-" + tier;
-        mark.title = name + " · fret " + f + (tier === "key" ? " · chord-tone highlight" : "");
+        mark.title = name + " · fret " + f + (tier === "key" ? " · chord tone" : tier === "sig" ? " · signature note" : "");
         const noteEl = document.createElement("span");
         noteEl.className = "fb-note";
         noteEl.textContent = name;
@@ -207,6 +209,24 @@ function keyPitchClassesFromPattern(rootPc, offsetSet) {
   return pcs;
 }
 
+const MAJOR_OFFSETS = new Set([0, 2, 4, 5, 7, 9, 11]);
+const MINOR_OFFSETS = new Set([0, 2, 3, 5, 7, 8, 10]);
+/** Beyond this many differences from major/minor, a scale is too far off for "signature notes" to mean much. */
+const SIGNATURE_MAX = 3;
+
+/**
+ * Signature notes: what makes a scale sound unlike plain major or natural minor.
+ * Compare against whichever of the two it's closest to; the notes not in that parent are the signature.
+ * e.g. Dorian → 6, Lydian → #4, Phrygian → b2, Mixolydian → b7, minor blues → b5. Major/minor/pentatonics → none.
+ */
+function signatureOffsets(offsetSet) {
+  const diff = (parent) => [...offsetSet].filter((o) => !parent.has(o));
+  const vsMajor = diff(MAJOR_OFFSETS);
+  const vsMinor = diff(MINOR_OFFSETS);
+  const best = vsMinor.length < vsMajor.length ? vsMinor : vsMajor;
+  return new Set(best.length <= SIGNATURE_MAX ? best : []);
+}
+
 function clampFret(n) {
   const x = Number(n);
   if (Number.isNaN(x)) return 21;
@@ -226,6 +246,7 @@ function setRootPc(pc, opts) {
   if (opts && opts.focus) {
     wrap.querySelector(`[data-pc="${v}"]`)?.focus();
   }
+  customOffsets = null;
   redraw();
 }
 
@@ -305,6 +326,7 @@ function buildScaleQuickPick() {
     btn.addEventListener("click", () => {
       sel.value = String(i);
       syncScaleQuickPickPressed();
+      customOffsets = null;
       redraw();
     });
     wrap.appendChild(btn);
@@ -319,17 +341,47 @@ function syncFretInputs(rangeEl, numEl, v) {
 }
 
 let presets = [];
+/** Parsed semitone offsets per preset (same indices as `presets`). */
+let presetOffsetsList = [];
+/** User-edited offsets from root, or null when showing the preset as-is. Reset on root/scale change. */
+let customOffsets = null;
+const MIN_SUGGESTIONS = 8;
+/** Groups that aren't scales — left out of suggestions. */
+const NON_SCALE_GROUPS = new Set(["Chords", "Chorts", "Intervals"]);
+/** Tie-break: familiar groups first. */
+function groupFamiliarity(g) {
+  if (g === "Common") return 0;
+  if (g === "Modal" || g === "Jazz" || g === "Blues") return 1;
+  return 2;
+}
+
+function currentPresetIndex() {
+  const idx = parseInt(document.getElementById("scaleSelect").value, 10);
+  return Number.isFinite(idx) && presets[idx] ? idx : -1;
+}
+
+function presetOffsets() {
+  const idx = currentPresetIndex();
+  return idx >= 0 ? presetOffsetsList[idx] : new Set();
+}
+
+function setsEqual(a, b) {
+  if (a.size !== b.size) return false;
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
+}
+
+function isEdited() {
+  return customOffsets !== null && !setsEqual(customOffsets, presetOffsets());
+}
 
 function getState() {
   const rootSel = document.getElementById("rootSelect");
-  const scaleSel = document.getElementById("scaleSelect");
   const tuningSel = document.getElementById("tuningSelect");
   const fretRange = document.getElementById("fretRange");
   const modeSel = document.getElementById("displayMode");
-  const idx = parseInt(scaleSel.value, 10);
-  const preset = Number.isFinite(idx) ? presets[idx] : undefined;
   const rootPc = parseInt(rootSel.value, 10);
-  const offsets = preset ? parsePresetValue(preset.Value) : new Set();
+  const offsets = customOffsets || presetOffsets();
   const maxFret = clampFret(fretRange.value);
   const tuning = TUNINGS[tuningSel.value] || TUNINGS.standard;
   const displayMode = modeSel && modeSel.value === "informational" ? "informational" : "simple";
@@ -340,12 +392,144 @@ function getState() {
     rootPitchClass: rootPc,
     scalePitchClasses: scalePitchClassesFromOffsets(rootPc, offsets),
     keyPitchClasses: keyPitchClassesFromPattern(rootPc, offsets),
+    signaturePitchClasses: scalePitchClassesFromOffsets(rootPc, signatureOffsets(offsets)),
     openStringMidi: tuning.openMidi,
   };
 }
 
 function redraw() {
-  renderFretboard(document.getElementById("fretboardMount"), getState());
+  const state = getState();
+  renderFretboard(document.getElementById("fretboardMount"), state);
+  renderNoteEditor(state.rootPitchClass);
+  renderSuggestions(state.rootPitchClass, state.scalePitchClasses);
+}
+
+function toggleNote(pcVal, rootPc) {
+  const off = (pcVal - rootPc + 12) % 12;
+  if (off === 0) return; // root stays in
+  if (!customOffsets) customOffsets = new Set(presetOffsets());
+  if (customOffsets.has(off)) customOffsets.delete(off);
+  else customOffsets.add(off);
+  redraw();
+}
+
+/** 12 toggles (C..B). Root is locked; added/removed vs. the preset are marked. */
+function renderNoteEditor(rootPc) {
+  const wrap = document.getElementById("noteEditor");
+  const resetBtn = document.getElementById("resetNotesBtn");
+  if (!wrap) return;
+  const base = presetOffsets();
+  const cur = customOffsets || base;
+  const sig = signatureOffsets(cur);
+  wrap.replaceChildren();
+
+  NOTE_NAMES.forEach((name, pcVal) => {
+    const off = (pcVal - rootPc + 12) % 12;
+    const on = cur.has(off) || off === 0;
+    const inBase = base.has(off) || off === 0;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "note-toggle";
+    btn.textContent = name;
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    if (off === 0) {
+      btn.classList.add("is-root");
+      btn.disabled = true;
+      btn.title = name + " — root (change it with the root picker)";
+    } else {
+      if (sig.has(off)) btn.classList.add("is-signature");
+      if (on && !inBase) btn.classList.add("is-added");
+      if (!on && inBase) btn.classList.add("is-removed");
+      btn.title = (on ? "Remove " : "Add ") + name;
+      btn.addEventListener("click", () => toggleNote(pcVal, rootPc));
+    }
+    wrap.appendChild(btn);
+  });
+
+  if (resetBtn) resetBtn.classList.toggle("d-none", !isEdited());
+}
+
+/**
+ * Rank every preset at every root against the selected pitch classes.
+ * Score = matching notes − extra notes (notes in the scale you didn't select).
+ * Presets with the same root and the same notes are merged into one option.
+ * Returns every option missing at most one selected note, and at least MIN_SUGGESTIONS.
+ */
+function rankSuggestions(selPcs, rootPc) {
+  const curIdx = currentPresetIndex();
+  const edited = isEdited();
+  const byNotes = new Map(); // "root|sorted pcs" -> option
+
+  presetOffsetsList.forEach((offs, i) => {
+    if (!offs.size) return;
+    const p = presets[i];
+    if (NON_SCALE_GROUPS.has(p.Group)) return;
+    for (let r = 0; r < 12; r++) {
+      if (!edited && i === curIdx && r === rootPc) continue;
+      const pcs = [...new Set([...offs].map((o) => (r + o) % 12))].sort((a, b) => a - b);
+      const key = r + "|" + pcs.join(",");
+      let opt = byNotes.get(key);
+      if (!opt) {
+        const matches = pcs.filter((x) => selPcs.has(x)).length;
+        const extras = pcs.length - matches;
+        opt = { r, members: [], matches, extras, score: matches - extras };
+        byNotes.set(key, opt);
+      }
+      if (!opt.members.some((m) => m.name === p.Name)) {
+        opt.members.push({ i, name: p.Name, fam: groupFamiliarity(p.Group || "") });
+      }
+    }
+  });
+
+  const out = [...byNotes.values()];
+  for (const o of out) {
+    o.members.sort((a, b) => a.fam - b.fam || a.name.localeCompare(b.name));
+    o.fam = o.members[0].fam;
+  }
+  out.sort(
+    (a, b) =>
+      b.score - a.score ||
+      b.matches - a.matches ||
+      a.fam - b.fam ||
+      (a.r === rootPc ? 0 : 1) - (b.r === rootPc ? 0 : 1) ||
+      a.members[0].name.localeCompare(b.members[0].name)
+  );
+  const minMatches = selPcs.size - 1;
+  return out.filter((o, idx) => idx < MIN_SUGGESTIONS || (o.matches >= minMatches && o.extras <= 1));
+}
+
+function loadSuggestion(s) {
+  const sel = document.getElementById("scaleSelect");
+  sel.value = String(s.members[0].i);
+  syncScaleQuickPickPressed();
+  setRootPc(s.r); // resets edits + redraws
+}
+
+function renderSuggestions(rootPc, selPcs) {
+  const list = document.getElementById("suggestionList");
+  if (!list) return;
+  list.replaceChildren();
+  const total = selPcs.size;
+
+  for (const s of rankSuggestions(selPcs, rootPc)) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "suggestion-item";
+    const label = s.members.map((m) => NOTE_NAMES[s.r] + " " + m.name).join(" / ");
+    btn.title = "Load " + NOTE_NAMES[s.r] + " " + s.members[0].name;
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "suggestion-name";
+    nameEl.textContent = label;
+
+    const metaEl = document.createElement("span");
+    metaEl.className = "suggestion-meta";
+    metaEl.textContent = s.matches + "/" + total + (s.extras ? " · +" + s.extras + " extra" : "");
+
+    btn.append(nameEl, metaEl);
+    btn.addEventListener("click", () => loadSuggestion(s));
+    list.appendChild(btn);
+  }
 }
 
 function groupSortOrder(a, b) {
@@ -373,6 +557,8 @@ function defaultPresetIndexForCMajor() {
 
 function buildScaleSelect(data) {
   presets = data.presets || [];
+  presetOffsetsList = presets.map((p) => parsePresetValue(p.Value));
+  customOffsets = null;
   const sel = document.getElementById("scaleSelect");
   sel.replaceChildren();
 
@@ -489,11 +675,19 @@ function init() {
     redraw();
   });
 
-  rootSel.addEventListener("change", redraw);
+  rootSel.addEventListener("change", () => {
+    customOffsets = null;
+    redraw();
+  });
   tuningSel.addEventListener("change", redraw);
   const scaleSel = document.getElementById("scaleSelect");
   scaleSel.addEventListener("change", () => {
     syncScaleQuickPickPressed();
+    customOffsets = null;
+    redraw();
+  });
+  document.getElementById("resetNotesBtn").addEventListener("click", () => {
+    customOffsets = null;
     redraw();
   });
   document.getElementById("displayMode").addEventListener("change", redraw);
