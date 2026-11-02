@@ -74,6 +74,15 @@ function renderFretboard(mount, opts) {
   const colCount = lastFret - FRET_START + 1;
   const simple = displayMode === "simple";
 
+  /** Color tier for an in-scale pitch class (root > 5th > emphasis > chord tone > plain). */
+  const tierFor = (p) => {
+    if (p === rootPitchClass) return "root";
+    if (p === fifthPitchClass) return "fifth";
+    if (signaturePitchClasses.has(p)) return "sig";
+    if (displayMode === "informational" && keyPitchClasses.has(p)) return "key";
+    return "scale";
+  };
+
   const grid = document.createElement("div");
   grid.className = "fb-grid" + (simple ? " fb-simple" : " fb-informational");
   grid.style.gridTemplateColumns = simple
@@ -94,7 +103,17 @@ function renderFretboard(mount, opts) {
   for (let s = 5; s >= 0; s--) {
     const lab = document.createElement("div");
     lab.className = "fb-string-label";
-    lab.textContent = stringLabel(openStringMidi, s);
+    const openPc = pc(openStringMidi[s]);
+    const openEl = document.createElement("span");
+    if (scalePitchClasses.has(openPc)) {
+      openEl.className = "fb-open fb-" + tierFor(openPc);
+      openEl.title = "Open " + noteLabel(openStringMidi[s]) + " · in scale";
+    } else {
+      openEl.className = "fb-open fb-open-out";
+      openEl.title = "Open " + noteLabel(openStringMidi[s]) + " · outside scale";
+    }
+    openEl.textContent = stringLabel(openStringMidi, s);
+    lab.appendChild(openEl);
     grid.appendChild(lab);
 
     for (let f = FRET_START; f <= lastFret; f++) {
@@ -114,11 +133,7 @@ function renderFretboard(mount, opts) {
         span.title = name + " · fret " + f + " (outside scale)";
         cell.appendChild(span);
       } else if (inScale) {
-        let tier = "scale";
-        if (isRoot) tier = "root";
-        else if (p === fifthPitchClass) tier = "fifth";
-        else if (signaturePitchClasses.has(p)) tier = "sig";
-        else if (displayMode === "informational" && keyPitchClasses.has(p)) tier = "key";
+        const tier = tierFor(p);
 
         const mark = document.createElement("div");
         mark.className = "fb-mark fb-" + tier;

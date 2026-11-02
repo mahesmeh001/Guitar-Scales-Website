@@ -319,6 +319,45 @@
         justify-content: center;
         font-family: ui-monospace, "Cascadia Code", monospace;
       }
+      /* Open-string label: pill in the note's color when in scale, faded when not */
+      .fb-open {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.7rem;
+        padding: 0.1rem 0.35rem;
+        border-radius: 5px;
+        border: 1px solid transparent;
+      }
+      .fb-open.fb-scale {
+        background: var(--pal-scale-fill);
+        color: var(--pal-scale-ink);
+        border-color: var(--pal-scale-border);
+      }
+      .fb-open.fb-key {
+        background: var(--pal-key-fill);
+        color: var(--pal-key-ink);
+      }
+      .fb-open.fb-sig {
+        background: var(--pal-sig-fill);
+        color: var(--pal-sig-ink);
+        border-color: var(--pal-sig-border);
+      }
+      .fb-open.fb-fifth {
+        background: var(--pal-fifth-fill);
+        color: var(--pal-fifth-ink);
+        border-color: var(--pal-fifth-border);
+      }
+      .fb-open.fb-root {
+        background: var(--pal-root);
+        color: var(--pal-root-ink);
+      }
+      .fb-open.fb-open-out {
+        color: var(--pal-outside);
+        font-weight: 500;
+        opacity: 0.55;
+        border: 1px dashed var(--pal-border-control);
+      }
       .fb-cell {
         position: relative;
         min-height: 2.35rem;
